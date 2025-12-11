@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  # Fluentd Log Aggregator
+  fluentd:
+    image: fluent/fluentd:v1.16-1
+    container_name: case5_fluentd
+    ports:
+      - "24224:24224"
+      - "24224:24224/udp"
+    volumes:
+      - ./fluentd/conf:/fluentd/etc
+      - ./fluentd/log:/fluentd/log
+    command: fluentd -c /fluentd/etc/fluent.conf
+    networks:
+      - logging-network
+
+  # Nginx Web Server (Log Generator)
+  webserver:
+    image: nginx:alpine
+    container_name: case5_nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx-conf/nginx.fluentd.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - fluentd
+    logging:
+      driver: fluentd
+      options:
+        fluentd-address: "localhost:24224"
+        tag: "nginx.access"
+    networks:
+      - logging-network
+
+networks:
+  logging-network:
+    driver: bridge
