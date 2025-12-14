@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  web:
+    build: ./platform
+    container_name: taskmanager-web
+    ports:
+      - "8085:80"
+    environment:
+      - DB_HOST=mysql
+      - DB_USER=root
+      - DB_PASS=rootpassword
+      - DB_NAME=taskmanager
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - mysql
+      - redis
+    networks:
+      - taskmanager-network
+
+  mysql:
+    image: mysql:5.7
+    container_name: taskmanager-mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpassword
+      - MYSQL_DATABASE=taskmanager
+      - MYSQL_ROOT_HOST=%
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - taskmanager-network
+    ports:
+      - "3306:3306"
+
+  redis:
+    image: redis:alpine
+    container_name: taskmanager-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - taskmanager-network
+
+volumes:
+  mysql-data:
+
+networks:
+  taskmanager-network:
+    driver: bridge
